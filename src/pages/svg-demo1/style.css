@@ -5,9 +5,30 @@
   box-sizing: border-box;
 }
 
-.svg-demo1-container svg {
-  width: 100%;
-  height: auto;
+/* Groupes cliquables du monde */
+.monde-svg svg g#Exprimer,
+.monde-svg svg g#Developper,
+.monde-svg svg g#Concevoir,
+.monde-svg svg g#Comprendre,
+.monde-svg svg g#Entreprendre {
+  cursor: pointer;
+}
+
+.monde-svg svg g#Exprimer *,
+.monde-svg svg g#Developper *,
+.monde-svg svg g#Concevoir *,
+.monde-svg svg g#Comprendre *,
+.monde-svg svg g#Entreprendre * {
+  pointer-events: none;
+}
+
+/* Groupes cliquables de la fleur */
+.flower-svg svg g[id^="AC"] {
+  cursor: pointer;
+}
+
+.flower-svg svg g[id^="AC"] * {
+  pointer-events: none;
 }
 
 .svg-demo1-title {
