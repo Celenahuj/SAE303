@@ -13,7 +13,7 @@ class PopupInfo {
     this.root.querySelector('.popup-code').textContent = infos.ac.code;
     this.root.querySelector('.popup-libelle').textContent = infos.ac.libelle;
     
-    const niveau = +localStorage.getItem(`coin_${infos.ac.code}`) || 0;
+    const niveau = +localStorage.getItem('coin_' + infos.ac.code) || 0;
     
     const niveauValue = this.root.querySelector('#niveau-value');
     niveauValue.textContent = niveau;
@@ -48,17 +48,12 @@ class PopupInfo {
 
       img.alt = "niveau";
       
-      img.addEventListener('click', (e) => {
-        const coinNumber = +e.target.dataset.coinIndex;
-        const newLevel = (coinNumber / maxCoins) * 100;
-        
-        localStorage.setItem(`coin_${this.currentCode}`, newLevel);
-        
-        const niveauValue = this.root.querySelector('#niveau-value');
-        niveauValue.textContent = newLevel;
-        
+      img.onclick = () => {
+        const newLevel = ((i + 1) / maxCoins) * 100;
+        localStorage.setItem('coin_' + this.currentCode, newLevel);
+        this.root.querySelector('#niveau-value').textContent = newLevel;
         this.renderCoins(newLevel);
-      });
+      };
       
       coinContainer.appendChild(img);
     }
