@@ -41,9 +41,9 @@ class PopupInfo {
       img.title = `Cliquer pour ${i + 1} pièce(s)`;
 
       if (i < goldCoins) {
-        img.src = "/src/ui/popup-info/coin_or.svg";
+        img.src = "/coin_or.svg";
       } else {
-        img.src = "/src/ui/popup-info/coin_vide.svg";
+        img.src = "/coin_vide.svg";
       }
 
       img.alt = "niveau";
