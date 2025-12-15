@@ -1,13 +1,17 @@
 .svg-demo1-container {
+  display: flex;
   width: 100%;
   max-width: 100%;
+  flex-direction: column;
+  align-items: center;
   margin: 0 auto;
+  padding-block: 1rem;
   box-sizing: border-box;
 }
 
 /* Groupes cliquables du monde */
 .monde-svg svg g#Exprimer,
-.monde-svg svg g#Developper,
+.monde-svg svg g#Développer,
 .monde-svg svg g#Concevoir,
 .monde-svg svg g#Comprendre,
 .monde-svg svg g#Entreprendre {
@@ -15,7 +19,7 @@
 }
 
 .monde-svg svg g#Exprimer *,
-.monde-svg svg g#Developper *,
+.monde-svg svg g#Développer *,
 .monde-svg svg g#Concevoir *,
 .monde-svg svg g#Comprendre *,
 .monde-svg svg g#Entreprendre * {
@@ -35,4 +39,23 @@
   font-size: 2rem;
   font-weight: bold;
   margin-bottom: 2rem;
+}
+
+.reset-zoom-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  background: #4a7c59;
+  border: 3px solid #2d5a3a;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 100;
+  font-family: "Press Start 2P", sans-serif;
+}
+
+.reset-zoom-btn:hover {
+  background: #5a9069;
 }

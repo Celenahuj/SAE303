@@ -48,6 +48,25 @@
   background: #9c683c;
 }
 
+/* BOUTON ZOOM */
+.popup-bouton-zoom {
+  background: #4a7c59;
+  border: 3px solid #2d5a3a;
+  padding: 10px 20px;
+  border-radius: 8px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: 0.15s;
+  margin: 15px auto;
+  display: block;
+  font-family: "Press Start 2P", sans-serif;
+}
+
+.popup-bouton-zoom:hover {
+  background: #5a9069;
+}
+
 /* TEXTE */
 .popup-code {
   margin-top: 5px;
