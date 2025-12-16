@@ -1,11 +1,11 @@
-.svg-demo1-container {
+.svg-monde-container {
   display: flex;
   width: 100%;
   max-width: 100%;
   flex-direction: column;
   align-items: center;
   margin: 0 auto;
-  padding-block: 1rem;
+  padding-block: 2rem;
   box-sizing: border-box;
 }
 
@@ -26,16 +26,7 @@
   pointer-events: none;
 }
 
-/* Groupes cliquables de la fleur */
-.flower-svg svg g[id^="AC"] {
-  cursor: pointer;
-}
-
-.flower-svg svg g[id^="AC"] * {
-  pointer-events: none;
-}
-
-.svg-demo1-title {
+.svg-monde-title {
   font-size: 2rem;
   font-weight: bold;
   margin-bottom: 2rem;
@@ -58,4 +49,37 @@
 
 .reset-zoom-btn:hover {
   background: #5a9069;
+}
+
+@media (max-width: 768px) {
+  .reset-zoom-btn {
+    top: 10px;
+    right: 10px;
+    padding: 8px 15px;
+    font-size: 10px;
+    border-width: 2px;
+  }
+}
+
+@media (max-width: 480px) {
+  .reset-zoom-btn {
+    top: 10px;
+    right: 10px;
+    padding: 6px 12px;
+    font-size: 8px;
+    border-width: 2px;
+  }
+}
+
+.monde-hover-label {
+  position: fixed;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  display: none;
+  white-space: nowrap;
 }

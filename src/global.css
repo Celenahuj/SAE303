@@ -2,7 +2,7 @@
 @import "./layouts/root/style.css";
 
 /* import des styles des pages */
-@import "./pages/svg-demo1/style.css";
+@import "./pages/svg-monde/style.css";
 
 /* import des styles des composants UI */
 @import "./ui/header/style.css";

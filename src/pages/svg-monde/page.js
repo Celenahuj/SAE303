@@ -6,6 +6,7 @@ import { htmlToDOM } from "@/lib/utils.js";
 import template from "./template.html?raw";
 import data from "../../data/data.json";
 import studentData from "../../data/student.json";
+import gsap from "gsap";
 
 
 let M = {}
@@ -55,6 +56,32 @@ M.calculateBorderColor = function (niveau) {
   } else {
     return '#00ff00';
   }
+}
+
+M.findCompetence = function (nomCourt) {
+  for (let key in M.donnees) {
+    const competence = M.donnees[key];
+    if (competence.nom_court === nomCourt) {
+      return competence;
+    }
+  }
+  return null;
+}
+
+M.calculateSaturation = function (moyenne) {
+  const maxMoyenne = 100;
+  const ratio = moyenne / maxMoyenne;
+
+  let saturation;
+  if (ratio <= 0.4) {
+    saturation = ratio * 0.5;
+  } else if (ratio <= 0.8) {
+    saturation = 0.2 + (ratio - 0.4) * 1.5;
+  } else {
+    saturation = 0.8 + (ratio - 0.8) * 1.0;
+  }
+  
+  return saturation;
 }
 
 M.getACInfo = function (element) {
@@ -116,23 +143,37 @@ C.handler_click = function (ev) {
 
 
 C.handler_clickMonde = function (ev) {
-
   const groupe = ev.target.closest('g[data-type="competence"]');
-  console.log("Groupe trouvé:", groupe);
-
   if (groupe) {
     console.log("Click détecté monde !", groupe);
-    console.log("Groupe id:", groupe.id);
     ev.stopPropagation();
     const infos = M.getCompetenceInfo(groupe);
-    console.log("Infos récupérées:", infos);
     if (infos) {
       V.popup.afficher(infos, true);
-    } else {
-      console.log("Aucune info trouvée pour ce groupe");
     }
-  } else {
-    console.log("Aucun groupe data-type='competence' trouvé");
+  }
+};
+
+C.handler_hoverMonde = function (ev) {
+  const groupe = ev.target.closest('g[data-type="competence"]');
+  if (groupe) {
+    V.showHoverLabel(groupe.id, ev.clientX, ev.clientY);
+    V.animateGroupHover(groupe, true);
+  }
+};
+
+C.handler_hoverOutMonde = function (ev) {
+  const groupe = ev.target.closest('g[data-type="competence"]');
+  if (groupe) {
+    V.hideHoverLabel();
+    V.animateGroupHover(groupe, false);
+  }
+};
+
+C.handler_mouseMoveMonde = function (ev) {
+  const groupe = ev.target.closest('g[data-type="competence"]');
+  if (groupe) {
+    V.updateHoverPosition(ev.clientX, ev.clientY);
   }
 };
 
@@ -145,6 +186,12 @@ C.init = function () {
   V.rootPage.querySelector('slot[name="monde-svg"]').replaceWith(V.monde.dom());
   C.attachEvents();
   C.initAllStyles();
+  
+  // Masquer la carte au démarrage
+  V.flowers.dom().style.display = 'none';
+  V.rootPage.querySelector('#reset-zoom').style.display = 'block';
+  V.repositionMonde(true);
+  
   return V.rootPage;
 }
 
@@ -152,6 +199,9 @@ C.attachEvents = function () {
   V.rootPage.addEventListener("click", C.handler_click);
   V.rootPage.addEventListener("click", C.handler_clickMonde);
   V.rootPage.querySelector('#reset-zoom').addEventListener('click', C.resetZoom);
+  V.monde.dom().addEventListener('mouseenter', C.handler_hoverMonde, true);
+  V.monde.dom().addEventListener('mouseleave', C.handler_hoverOutMonde, true);
+  V.monde.dom().addEventListener('mousemove', C.handler_mouseMoveMonde, true);
 }
 
 C.initAllStyles = function () {
@@ -163,6 +213,18 @@ C.initAllStyles = function () {
     const borderColor = M.calculateBorderColor(niveau);
     V.applyACStyle(ac, borderColor);
   }
+  
+  C.updateMondeStyles();
+}
+
+C.updateMondeStyles = function () {
+  const allCompetences = V.monde.dom().querySelectorAll('g[data-type="competence"]');
+  for (let i = 0; i < allCompetences.length; i++) {
+    const competence = allCompetences[i];
+    const niveau = M.getNiveau(competence.id);
+    const saturation = M.calculateSaturation(niveau);
+    V.applyCompetenceSaturation(competence, saturation);
+  }
 }
 
 C.updateACStyle = function (code) {
@@ -172,14 +234,24 @@ C.updateACStyle = function (code) {
     const borderColor = M.calculateBorderColor(niveau);
     V.applyACStyle(ACGroup, borderColor);
   }
+  C.updateMondeStyles();
 }
 
 C.zoomToCompetence = function (competenceId) {
+  // Afficher la carte et le bouton reset
+  V.flowers.dom().style.display = 'block';
+  V.rootPage.querySelector('#reset-zoom').style.display = 'block';
+  V.repositionMonde(false);
   V.zoomToCompetence(competenceId);
 }
 
 C.resetZoom = function () {
   V.resetZoom();
+  // Afficher carte et monde ensemble
+  V.flowers.dom().style.display = 'block';
+  V.monde.dom().style.display = 'block';
+  V.rootPage.querySelector('#reset-zoom').style.display = 'block';
+  V.repositionMonde(false);
 }
 
 
@@ -195,6 +267,79 @@ V.applyACStyle = function (element, borderColor) {
     element.style.filter = '';
   } else {
     element.style.filter = 'drop-shadow(0 0 4px ' + borderColor + ') drop-shadow(0 0 8px ' + borderColor + ')';
+  }
+}
+
+V.showHoverLabel = function (text, x, y) {
+  if (!V.hoverLabel) {
+    V.hoverLabel = document.createElement('div');
+    V.hoverLabel.className = 'monde-hover-label';
+    document.body.appendChild(V.hoverLabel);
+  }
+  V.hoverLabel.textContent = text;
+  V.hoverLabel.style.display = 'block';
+  V.updateHoverPosition(x, y);
+}
+
+V.updateHoverPosition = function (x, y) {
+  if (V.hoverLabel) {
+    V.hoverLabel.style.left = x + 15 + 'px';
+    V.hoverLabel.style.top = y + 15 + 'px';
+  }
+}
+
+V.hideHoverLabel = function () {
+  if (V.hoverLabel) {
+    V.hoverLabel.style.display = 'none';
+  }
+}
+
+V.animateGroupHover = function (element, status) {
+  gsap.killTweensOf(element);
+  if (status) {
+    gsap.to(element, {
+      duration: 0.3,
+      y: -5,
+      scale: 1.05,
+      ease: "power2.out"
+    });
+  } else {
+    gsap.to(element, {
+      duration: 0.3,
+      y: 0,
+      scale: 1,
+      ease: "power2.out"
+    });
+  }
+}
+
+V.applyCompetenceSaturation = function (element, saturation) {
+  const gray = 1 - saturation;
+  if (saturation >= 0.99) {
+    gsap.to(element, {
+      duration: 0.5,
+      filter: 'grayscale(0)'
+    });
+  } else {
+    gsap.to(element, {
+      duration: 0.5,
+      filter: 'grayscale(' + gray + ')'
+    });
+  }
+}
+
+V.repositionMonde = function (centrer) {
+  const container = V.rootPage.querySelector('.svg-monde-container');
+  if (centrer) {
+    container.style.justifyContent = 'center';
+    container.style.alignItems = 'center';
+    container.style.display = 'flex';
+    container.style.height = '100vh';
+  } else {
+    container.style.justifyContent = '';
+    container.style.alignItems = '';
+    container.style.display = '';
+    container.style.height = '';
   }
 }
 
@@ -216,8 +361,10 @@ V.zoomToCompetence = function (competenceId) {
   }
   
   const bbox = groupeZoom.getBBox();
-  const pad = 50;
-  const newViewBox = (bbox.x - pad) + ' ' + (bbox.y - pad) + ' ' + (bbox.width + pad * 2) + ' ' + (bbox.height + pad * 2);
+  const padRatio = 0.15;
+  const padX = bbox.width * padRatio;
+  const padY = bbox.height * padRatio;
+  const newViewBox = (bbox.x - padX) + ' ' + (bbox.y - padY) + ' ' + (bbox.width + padX * 2) + ' ' + (bbox.height + padY * 2);
   svg.setAttribute('viewBox', newViewBox);
 }
 
@@ -230,6 +377,6 @@ V.resetZoom = function () {
   svg.setAttribute('viewBox', '0 0 2744.98 910.14');
 }
 
-export function SvgDemo1Page() {
+export function SvgMondePage() {
   return C.init();
 }
