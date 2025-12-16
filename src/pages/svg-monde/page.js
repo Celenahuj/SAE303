@@ -7,6 +7,7 @@ import template from "./template.html?raw";
 import data from "../../data/data.json";
 import studentData from "../../data/student.json";
 import gsap from "gsap";
+import { Animation } from "@/lib/animation.js";
 
 
 let M = {}
@@ -192,6 +193,9 @@ C.init = function () {
   V.rootPage.querySelector('#reset-zoom').style.display = 'block';
   V.repositionMonde(true);
   
+  // Animation pop des mondes au démarrage
+  V.animateMondesEntree();
+  
   return V.rootPage;
 }
 
@@ -243,6 +247,9 @@ C.zoomToCompetence = function (competenceId) {
   V.rootPage.querySelector('#reset-zoom').style.display = 'block';
   V.repositionMonde(false);
   V.zoomToCompetence(competenceId);
+  
+  // Animation d'entrée pour les AC de la compétence
+  V.animateACEntree(competenceId);
 }
 
 C.resetZoom = function () {
@@ -341,6 +348,60 @@ V.repositionMonde = function (centrer) {
     container.style.display = '';
     container.style.height = '';
   }
+}
+
+V.animateMondesEntree = function () {
+  const mondeSvg = V.monde.dom();
+  const allCompetences = mondeSvg.querySelectorAll('g[data-type="competence"]');
+  
+  // Permettre le débordement pendant l'animation
+  mondeSvg.style.overflow = 'visible';
+  
+  gsap.set(allCompetences, {
+    y: 200,
+    scale: 0,
+    opacity: 0
+  });
+  
+  gsap.to(allCompetences, {
+    y: 0,
+    scale: 1,
+    opacity: 1,
+    duration: 0.8,
+    ease: "back.out(1.7)",
+    stagger: {
+      amount: 0.6,
+      from: "start"
+    }
+  });
+}
+
+V.animateACEntree = function (competenceId) {
+  const svg = V.flowers.dom();
+  const groupeZoom = svg.querySelector('#' + competenceId);
+  
+  if (!groupeZoom) return;
+  
+  // Permettre le débordement pendant l'animation
+  svg.style.overflow = 'visible';
+  
+  // Récupérer uniquement les AC dans ce groupe de compétence
+  const allAC = groupeZoom.querySelectorAll('g[data-type="AC"]');
+  
+  gsap.set(allAC, {
+    y: 20,
+    scale: 0.95,
+    opacity: 0
+  });
+  
+  gsap.to(allAC, {
+    y: 0,
+    scale: 1,
+    opacity: 1,
+    duration: 0.6,
+    ease: "power3.out",
+    stagger: 0.04
+  });
 }
 
 V.zoomToCompetence = function (competenceId) {
