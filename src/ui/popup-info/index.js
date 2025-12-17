@@ -3,11 +3,13 @@ import template from "./template.html?raw";
 
 class PopupInfo {
 
-  constructor(modele, onUpdate, onZoom) {
+  constructor(modele, onUpdate, onZoom, onCoinUpdate, onNotesUpdate) {
     this.root = htmlToDOM(template);
     this.modele = modele;
     this.onUpdate = onUpdate;
     this.onZoom = onZoom;
+    this.onCoinUpdate = onCoinUpdate;
+    this.onNotesUpdate = onNotesUpdate;
     this.attachEvents();
   }
 
@@ -16,6 +18,7 @@ class PopupInfo {
     this.zoom = zoom || false;
     this.root.querySelector('.popup-code').textContent = infos.ac.code;
     this.root.querySelector('.popup-libelle').textContent = infos.ac.libelle;
+    this.root.querySelector('.popup-description').value = this.modele.getNotes(infos.ac.code);
     
     const niveau = this.modele.getNiveau(infos.ac.code);
     
@@ -65,23 +68,21 @@ class PopupInfo {
       
       img.addEventListener('click', (e) => {
         const coinNumber = +e.target.dataset.coinIndex;
-        const oldLevel = this.modele.getNiveau(this.currentCode);
-        const newLevel = (coinNumber / maxCoins) * 100;
-        
-        this.modele.setNiveau(this.currentCode, newLevel);
-        this.modele.addHistory(this.currentCode, oldLevel, newLevel);
-        
-        const niveauValue = this.root.querySelector('#niveau-value');
-        niveauValue.textContent = newLevel;
-        
-        this.renderCoins(newLevel);
-        this.afficherHistorique();
-        if (this.onUpdate) {
-          this.onUpdate(this.currentCode);
-        }
+        this.onCoinUpdate(this.currentCode, coinNumber);
       });
       
       coinContainer.appendChild(img);
+    }
+  }
+
+  updateDisplay(code) {
+    const niveau = this.modele.getNiveau(code);
+    const niveauValue = this.root.querySelector('#niveau-value');
+    niveauValue.textContent = niveau;
+    this.renderCoins(niveau);
+    this.afficherHistorique();
+    if (this.onUpdate) {
+      this.onUpdate(code);
     }
   }
 
@@ -99,6 +100,12 @@ class PopupInfo {
         this.fermer();
       }
     });
+
+    this.root.querySelector('.popup-description').addEventListener('blur', (e) => {
+      if (this.onNotesUpdate) {
+        this.onNotesUpdate(this.currentCode, e.target.value);
+      }
+    });
   }
 
   afficherBoutonZoom() {
@@ -114,8 +121,12 @@ class PopupInfo {
           this.fermer();
         }
       });
-      const coinsContainer = this.root.querySelector('#ac-coins');
-      coinsContainer.parentNode.insertBefore(boutonZoom, coinsContainer.nextSibling);
+      const desc = this.root.querySelector('.popup-description');
+      if (desc) {
+        desc.parentNode.insertBefore(boutonZoom, desc.nextSibling);
+      } else {
+        coinsContainer.parentNode.insertBefore(boutonZoom, coinsContainer.nextSibling);
+      }
     }
     boutonZoom.style.display = 'block';
   }

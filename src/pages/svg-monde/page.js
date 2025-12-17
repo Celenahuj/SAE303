@@ -4,50 +4,46 @@ import { PopupInfo } from "@/ui/popup-info";
 import "@/ui/popup-info/style.css";
 import { htmlToDOM } from "@/lib/utils.js";
 import template from "./template.html?raw";
-import data from "../../data/data.json";
-import studentData from "../../data/student.json";
+import pn from "../../data/pn.js";
+import student from "../../data/student.js";
 import gsap from "gsap";
-import { Animation } from "@/lib/animation.js";
 
 
 let M = {}
-M.donnees = data;
-M.student = studentData;
+M.donnees = pn;
+M.student = student;
 
 M.getNiveau = function (code) {
-  return +localStorage.getItem('coin_' + code) || 0;
+  return student.getCoin(code);
 }
 
 M.setNiveau = function (code, niveau) {
-  localStorage.setItem('coin_' + code, niveau);
+  student.setCoin(code, niveau);
 }
 
 M.getHistory = function (code) {
-  const historyKey = 'history_' + code;
-  return JSON.parse(localStorage.getItem(historyKey) || '[]');
+  return student.getHistory(code);
 }
 
 M.addHistory = function (code, oldLevel, newLevel) {
-  const historyKey = 'history_' + code;
-  const history = M.getHistory(code);
-  history.push({
-    ac: code,
-    date: Date.now(),
-    oldLevel: oldLevel,
-    newLevel: newLevel
-  });
-  localStorage.setItem(historyKey, JSON.stringify(history));
+  student.addHistory(code, oldLevel, newLevel);
+  student.saveToLocalStorage();
 }
 
-M.calculateOpacity = function (niveau) {
-  return 1;
+M.getNotes = function (code) {
+  return student.getNotes(code);
+}
+
+M.setNotes = function (code, notes) {
+  student.setNotes(code, notes);
+  student.saveToLocalStorage();
 }
 
 M.calculateBorderColor = function (niveau) {
   const maxCoins = 5;
   const goldCoins = Math.round((niveau / 100) * maxCoins);
-  
-  if (goldCoins === 0){
+
+  if (goldCoins === 0) {
     return null;
   }
   if (goldCoins <= 2) {
@@ -60,13 +56,7 @@ M.calculateBorderColor = function (niveau) {
 }
 
 M.findCompetence = function (nomCourt) {
-  for (let key in M.donnees) {
-    const competence = M.donnees[key];
-    if (competence.nom_court === nomCourt) {
-      return competence;
-    }
-  }
-  return null;
+  return M.donnees.findCompetence(nomCourt);
 }
 
 M.calculateSaturation = function (moyenne) {
@@ -81,48 +71,22 @@ M.calculateSaturation = function (moyenne) {
   } else {
     saturation = 0.8 + (ratio - 0.8) * 1.0;
   }
-  
+
   return saturation;
 }
 
 M.getACInfo = function (element) {
   const id = element.id;
   if (!id) return null;
-  
-  for (let competence of Object.values(M.donnees)) {
-    for (let niveau of competence.niveaux) {
-      for (let ac of niveau.acs) {
-        if (ac.code === id) {
-          return {
-            competence: competence.nom_court,
-            niveau: Math.round((niveau.ordre / 3) * 100),
-            ac: ac
-          };
-        }
-      }
-    }
-  }
-  return null;
+
+  return M.donnees.getACInfo(id);
 }
 
 M.getCompetenceInfo = function (element) {
   const id = element.id;
   if (!id) return null;
-  
-  for (let competence of Object.values(M.donnees)) {
-    if (competence.nom_court === id) {
-      const niveauMoyen = Math.round((competence.niveaux.length / 3) * 100);
-      return {
-        competence: competence.nom_court,
-        niveau: niveauMoyen,
-        ac: {
-          code: competence.nom_court,
-          libelle: competence.libelle_long
-        }
-      };
-    }
-  }
-  return null;
+
+  return M.donnees.getCompetenceInfo(id);
 }
 
 
@@ -155,57 +119,83 @@ C.handler_clickMonde = function (ev) {
   }
 };
 
-C.handler_hoverMonde = function (ev) {
-  const groupe = ev.target.closest('g[data-type="competence"]');
+C.handler_hover = function (ev) {
+  const groupe = ev.target.closest('g[data-type="competence"], g[data-type="AC"]');
   if (groupe) {
     V.showHoverLabel(groupe.id, ev.clientX, ev.clientY);
     V.animateGroupHover(groupe, true);
   }
 };
 
-C.handler_hoverOutMonde = function (ev) {
-  const groupe = ev.target.closest('g[data-type="competence"]');
+C.handler_hoverOut = function (ev) {
+  const groupe = ev.target.closest('g[data-type="competence"], g[data-type="AC"]');
   if (groupe) {
     V.hideHoverLabel();
     V.animateGroupHover(groupe, false);
   }
 };
 
-C.handler_mouseMoveMonde = function (ev) {
-  const groupe = ev.target.closest('g[data-type="competence"]');
+C.handler_mouseMove = function (ev) {
+  const groupe = ev.target.closest('g[data-type="competence"], g[data-type="AC"]');
   if (groupe) {
     V.updateHoverPosition(ev.clientX, ev.clientY);
   }
 };
 
+C.handler_export = function () {
+  M.exportSauvegarde();
+}
+
+C.updateCoin = function (code, coinNumber) {
+  const oldLevel = M.getNiveau(code);
+  const newLevel = (coinNumber / 5) * 100;
+  M.setNiveau(code, newLevel);
+  M.addHistory(code, oldLevel, newLevel);
+  V.popup.updateDisplay(code);
+}
+
+C.updateNotes = function (code, notes) {
+  M.setNotes(code, notes);
+}
+
 C.init = function () {
   V.rootPage = htmlToDOM(template);
   V.flowers = new FlowerView();
   V.monde = new MondeView();
-  V.popup = new PopupInfo(M, C.updateACStyle, C.zoomToCompetence);
+  V.popup = new PopupInfo(M, C.updateACStyle, C.zoomToCompetence, C.updateCoin, C.updateNotes);
   V.rootPage.querySelector('slot[name="flower-svg"]').replaceWith(V.flowers.dom());
   V.rootPage.querySelector('slot[name="monde-svg"]').replaceWith(V.monde.dom());
   C.attachEvents();
   C.initAllStyles();
-  
+
   // Masquer la carte au démarrage
   V.flowers.dom().style.display = 'none';
   V.rootPage.querySelector('#reset-zoom').style.display = 'block';
   V.repositionMonde(true);
-  
+
   // Animation pop des mondes au démarrage
   V.animateMondesEntree();
-  
+
+  // Branchement du bouton d'export
+  const exportBtn = V.rootPage.querySelector('#export-save');
+  exportBtn.addEventListener('click', C.handler_export);
+
   return V.rootPage;
 }
 
 C.attachEvents = function () {
   V.rootPage.addEventListener("click", C.handler_click);
   V.rootPage.addEventListener("click", C.handler_clickMonde);
-  V.rootPage.querySelector('#reset-zoom').addEventListener('click', C.resetZoom);
-  V.monde.dom().addEventListener('mouseenter', C.handler_hoverMonde, true);
-  V.monde.dom().addEventListener('mouseleave', C.handler_hoverOutMonde, true);
-  V.monde.dom().addEventListener('mousemove', C.handler_mouseMoveMonde, true);
+  const resetBtn = V.rootPage.querySelector('#reset-zoom');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => { V.resetZoom(); });
+  }
+  V.monde.dom().addEventListener('mouseenter', C.handler_hover, true);
+  V.monde.dom().addEventListener('mouseleave', C.handler_hoverOut, true);
+  V.monde.dom().addEventListener('mousemove', C.handler_mouseMove, true);
+  V.flowers.dom().addEventListener('mouseenter', C.handler_hover, true);
+  V.flowers.dom().addEventListener('mouseleave', C.handler_hoverOut, true);
+  V.flowers.dom().addEventListener('mousemove', C.handler_mouseMove, true);
 }
 
 C.initAllStyles = function () {
@@ -217,7 +207,7 @@ C.initAllStyles = function () {
     const borderColor = M.calculateBorderColor(niveau);
     V.applyACStyle(ac, borderColor);
   }
-  
+
   C.updateMondeStyles();
 }
 
@@ -241,6 +231,18 @@ C.updateACStyle = function (code) {
   C.updateMondeStyles();
 }
 
+C.updateCoin = function (code, coinNumber) {
+  const oldLevel = M.getNiveau(code);
+  const newLevel = (coinNumber / 5) * 100;
+  M.setNiveau(code, newLevel);
+  M.addHistory(code, oldLevel, newLevel);
+  V.popup.updateDisplay(code);
+}
+
+C.updateNotes = function (code, notes) {
+  M.setNotes(code, notes);
+}
+
 C.zoomToCompetence = function (competenceId) {
   // Afficher la carte et le bouton reset
   V.flowers.dom().style.display = 'block';
@@ -252,14 +254,19 @@ C.zoomToCompetence = function (competenceId) {
   V.animateACEntree(competenceId);
 }
 
-C.resetZoom = function () {
-  V.resetZoom();
-  // Afficher carte et monde ensemble
-  V.flowers.dom().style.display = 'block';
-  V.monde.dom().style.display = 'block';
-  V.rootPage.querySelector('#reset-zoom').style.display = 'block';
-  V.repositionMonde(false);
-}
+M.exportSauvegarde = function () {
+  const data = { coins: student.data, history: student.history };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = "sauvegarde_SAE303.json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
 
 
 let V = {
@@ -353,16 +360,16 @@ V.repositionMonde = function (centrer) {
 V.animateMondesEntree = function () {
   const mondeSvg = V.monde.dom();
   const allCompetences = mondeSvg.querySelectorAll('g[data-type="competence"]');
-  
+
   // Permettre le débordement pendant l'animation
   mondeSvg.style.overflow = 'visible';
-  
+
   gsap.set(allCompetences, {
     y: 200,
     scale: 0,
     opacity: 0
   });
-  
+
   gsap.to(allCompetences, {
     y: 0,
     scale: 1,
@@ -379,21 +386,21 @@ V.animateMondesEntree = function () {
 V.animateACEntree = function (competenceId) {
   const svg = V.flowers.dom();
   const groupeZoom = svg.querySelector('#' + competenceId);
-  
+
   if (!groupeZoom) return;
-  
+
   // Permettre le débordement pendant l'animation
   svg.style.overflow = 'visible';
-  
+
   // Récupérer uniquement les AC dans ce groupe de compétence
   const allAC = groupeZoom.querySelectorAll('g[data-type="AC"]');
-  
+
   gsap.set(allAC, {
     y: 20,
     scale: 0.95,
     opacity: 0
   });
-  
+
   gsap.to(allAC, {
     y: 0,
     scale: 1,
@@ -407,26 +414,44 @@ V.animateACEntree = function (competenceId) {
 V.zoomToCompetence = function (competenceId) {
   const svg = V.flowers.dom();
   const groupeZoom = svg.querySelector('#' + competenceId);
-  
+
   if (!groupeZoom) return;
-  
+
   const allGroups = svg.querySelectorAll('g');
   for (let i = 0; i < allGroups.length; i++) {
     allGroups[i].style.display = 'none';
   }
-  
+
   groupeZoom.style.display = 'block';
   const subGroups = groupeZoom.querySelectorAll('g');
   for (let i = 0; i < subGroups.length; i++) {
     subGroups[i].style.display = 'block';
   }
-  
+
   const bbox = groupeZoom.getBBox();
-  const padRatio = 0.15;
+  const padRatio = 0.10;
   const padX = bbox.width * padRatio;
   const padY = bbox.height * padRatio;
-  const newViewBox = (bbox.x - padX) + ' ' + (bbox.y - padY) + ' ' + (bbox.width + padX * 2) + ' ' + (bbox.height + padY * 2);
-  svg.setAttribute('viewBox', newViewBox);
+  let newViewBox = (bbox.x - padX) + ' ' + (bbox.y - padY) + ' ' + (bbox.width + padX * 2) + ' ' + (bbox.height + padY * 2);
+
+  // Définir des viewBox spécifiques pour certains groupes
+  if (competenceId === 'Exprimer') {
+    newViewBox = '-105 -0 1019 1171';
+    svg.style.width = '80%';
+  } else if (competenceId === 'Développer') {
+    svg.style.width = '100%';
+  } else if (competenceId === 'Entreprendre') {
+    svg.style.width = '104%';
+  } else if (competenceId === 'Concevoir') {
+    svg.style.width = '100%';
+  } else if (competenceId === 'Comprendre') {
+    newViewBox = '677 426 1022 570';
+    svg.style.width = '75%';
+  }
+
+
+console.log("Nouveau viewBox :", newViewBox);
+svg.setAttribute('viewBox', newViewBox);
 }
 
 V.resetZoom = function () {
@@ -436,8 +461,9 @@ V.resetZoom = function () {
     allGroups[i].style.display = 'block';
   }
   svg.setAttribute('viewBox', '0 0 2744.98 910.14');
+  svg.style.width = '100%';
+  svg.style.display = 'block'; // Afficher la carte
 }
-
 export function SvgMondePage() {
   return C.init();
 }

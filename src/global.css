@@ -4,11 +4,6 @@
 /* import des styles des pages */
 @import "./pages/svg-monde/style.css";
 
-/* import des styles des composants UI */
-@import "./ui/header/style.css";
-@import "./ui/footer/style.css";
-@import "./ui/spinner/style.css";
-@import "./ui/star/style.css";
 
 :root {
   /* Primitives Tokens */
