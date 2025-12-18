@@ -1,10 +1,20 @@
 {
-	"servers": {
-		"my-mcp-server-71e0cc30": {
-			"type": "stdio",
-			"command": "mcp.context7.com/mc",
-			"args": ["-y", "@upstash/context7-mcp", "--api-key", "ctx7sk-46e4c76a-36f5-4645-aeb8-bf73bbb8c054"]
-		},
-	},
-	"inputs": []
+	// "servers": {
+	// 	"my-mcp-server-71e0cc30": {
+	// 		"type": "stdio",
+	// 		"command": "mcp.context7.com/mc",
+	// 		"args": ["-y", "@upstash/context7-mcp", "--api-key", "ctx7sk-46e4c76a-36f5-4645-aeb8-bf73bbb8c054"]
+	// 	},
+	// },
+	// "inputs": [],
+
+  "servers": {
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "ctx7sk-46e4c76a-36f5-4645-aeb8-bf73bbb8c054"
+      }
+    }
+  }
 }
