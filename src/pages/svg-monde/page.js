@@ -146,6 +146,27 @@ C.handler_export = function () {
   M.exportSauvegarde();
 }
 
+C.handler_import = function (ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.coins) student.data = data.coins;
+      if (data.history) student.history = data.history;
+      if (data.notes) student.notes = data.notes;
+      student.saveToLocalStorage();
+      
+      C.initAllStyles();
+      console.log('Données importées avec succès');
+    } catch (err) {
+      console.error('Erreur lors de l\'importation du JSON', err);
+    }
+  };
+  reader.readAsText(file);
+}
+
 C.updateCoin = function (code, coinNumber) {
   const oldLevel = M.getNiveau(code);
   const newLevel = (coinNumber / 5) * 100;
@@ -179,6 +200,10 @@ C.init = function () {
   // Branchement du bouton d'export
   const exportBtn = V.rootPage.querySelector('#export-save');
   exportBtn.addEventListener('click', C.handler_export);
+
+  // Branchement de l'input d'import
+  const importInput = V.rootPage.querySelector('#import-save');
+  importInput.addEventListener('change', C.handler_import);
 
   return V.rootPage;
 }
@@ -255,7 +280,7 @@ C.zoomToCompetence = function (competenceId) {
 }
 
 M.exportSauvegarde = function () {
-  const data = { coins: student.data, history: student.history };
+  const data = { coins: student.data, history: student.history, notes: student.notes };
 
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -411,6 +436,31 @@ V.animateACEntree = function (competenceId) {
   });
 }
 
+V.animateAllACEntree = function () {
+  const svg = V.flowers.dom();
+
+  // Permettre le débordement pendant l'animation
+  svg.style.overflow = 'visible';
+
+  // Récupérer toutes les AC
+  const allAC = svg.querySelectorAll('g[data-type="AC"]');
+
+  gsap.set(allAC, {
+    y: 20,
+    scale: 0.95,
+    opacity: 0
+  });
+
+  gsap.to(allAC, {
+    y: 0,
+    scale: 1,
+    opacity: 1,
+    duration: 0.6,
+    ease: "power3.out",
+    stagger: 0.04
+  });
+}
+
 V.zoomToCompetence = function (competenceId) {
   const svg = V.flowers.dom();
   const groupeZoom = svg.querySelector('#' + competenceId);
@@ -463,6 +513,9 @@ V.resetZoom = function () {
   svg.setAttribute('viewBox', '0 0 2744.98 910.14');
   svg.style.width = '100%';
   svg.style.display = 'block'; // Afficher la carte
+
+  // Animation d'entrée pour toutes les AC
+  V.animateAllACEntree();
 }
 export function SvgMondePage() {
   return C.init();

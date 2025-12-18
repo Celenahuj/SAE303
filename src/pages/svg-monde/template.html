@@ -1,7 +1,8 @@
 <div>
   <div class="bouton">
     <button id="reset-zoom" class="reset-zoom-btn">Voir la carte</button>
-    <img src="/save.svg"  alt="Exporter mes données" class="export-btn" id="export-save" viewBox="0 0 0 34" >
+    <img src="/save.svg"  alt="Exporter mes données" class="export-btn" id="export-save" >
+    <input type="file" alt="Importer mes données" id="import-save" accept=".json" class="import-btn">
   </div>
   <section class="svg-monde-container">
     <slot name="monde-svg"></slot>
