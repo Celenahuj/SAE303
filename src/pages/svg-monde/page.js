@@ -40,19 +40,14 @@ M.setNotes = function (code, notes) {
 }
 
 M.calculateBorderColor = function (niveau) {
+
   const maxCoins = 5;
   const goldCoins = Math.round((niveau / 100) * maxCoins);
 
-  if (goldCoins === 0) {
-    return null;
-  }
-  if (goldCoins <= 2) {
-    return '#ff0000';
-  } else if (goldCoins <= 4) {
-    return '#ffff00';
-  } else {
-    return '#00ff00';
-  }
+  if (goldCoins === 0) return null;
+  if (goldCoins <= 2) return 'ac-filter--red';
+  if (goldCoins <= 4) return 'ac-filter--yellow';
+  return 'ac-filter--green';
 }
 
 M.findCompetence = function (nomCourt) {
@@ -66,7 +61,7 @@ M.getSortedHistory = function() {
       events.push({ ...event, code });
     });
   }
-  return events.sort((a, b) => a.date - b.date); // ancienne à récente
+  return events.sort((a, b) => a.date - b.date); 
 }
 
 M.calculateSaturation = function (moyenne) {
@@ -206,8 +201,8 @@ C.init = function () {
   C.buildHistoryTimeline();
 
   // Masquer la carte au démarrage
-  V.flowers.dom().style.display = 'none';
-  V.rootPage.querySelector('#reset-zoom').style.display = 'block';
+  V.flowers.dom().classList.add('hidden');
+  V.rootPage.querySelector('#reset-zoom').classList.remove('hidden');
   V.repositionMonde(true);
 
   // Animation pop des mondes au démarrage
@@ -217,8 +212,6 @@ C.init = function () {
   const exportBtn = V.rootPage.querySelector('#export-save');
   console.log('Export button element:', exportBtn);
   if (exportBtn) {
-    // s'assurer que l'élément accepte les clics (au cas où un parent ou CSS bloque les pointer-events)
-    exportBtn.style.pointerEvents = 'auto';
     exportBtn.addEventListener('click', C.handler_export);
     console.log('Export event attached');
   } else {
@@ -249,7 +242,6 @@ C.init = function () {
       }
       student.data = tempData;
       C.initAllStyles();
-      // Afficher la date
       if (index === 0) {
         dateSpan.textContent = 'Début';
       } else if (index === historiquetrier.length) {
@@ -316,7 +308,7 @@ C.buildHistoryTimeline = function () {
   if (slider) {
     slider.status = false;
     slider.max = history.length;
-    slider.value = history.length; // état actuel
+    slider.value = history.length; 
   }
   if (dateSpan) dateSpan.textContent = 'Maintenant';
 }
@@ -337,8 +329,8 @@ C.updateNotes = function (code, notes) {
 
 C.zoomToCompetence = function (competenceId) {
   // Afficher la carte et le bouton reset
-  V.flowers.dom().style.display = 'block';
-  V.rootPage.querySelector('#reset-zoom').style.display = 'block';
+  V.flowers.dom().classList.remove('hidden');
+  V.rootPage.querySelector('#reset-zoom').classList.remove('hidden');
   V.repositionMonde(false);
   V.zoomToCompetence(competenceId);
   
@@ -372,11 +364,10 @@ let V = {
 };
 
 V.applyACStyle = function (element, borderColor) {
-  if (borderColor === null) {
-    element.style.filter = '';
-  } else {
-    element.style.filter = 'drop-shadow(0 0 4px ' + borderColor + ') drop-shadow(0 0 8px ' + borderColor + ')';
-  }
+
+  element.classList.remove('ac-filter--red', 'ac-filter--yellow', 'ac-filter--green');
+  element.style.filter = '';
+  if (borderColor) element.classList.add(borderColor);
 }
 
 V.showHoverLabel = function (text, x, y) {
@@ -438,45 +429,31 @@ V.applyCompetenceSaturation = function (element, saturation) {
 }
 
 V.applyGroupOpacity = function (element, opacity) {
-  // Animate opacity with GSAP so the change is smooth
+  
   gsap.to(element, {
     duration: 0.35,
     opacity: opacity,
     ease: 'power1.out'
   });
 }
-
 V.repositionMonde = function (centrer) {
   const container = V.rootPage.querySelector('.svg-monde-container');
-  if (centrer) {
-    container.style.justifyContent = 'center';
-    container.style.alignItems = 'center';
-    container.style.display = 'flex';
-    container.style.height = '100vh';
-    container.style.position = 'fixed';
-    container.style.top = '0';
-    container.style.left = '0';
-    container.style.width = '100%';
-    container.style.zIndex = '1';
-  } else {
-    container.style.justifyContent = '';
-    container.style.alignItems = '';
-    container.style.display = '';
-    container.style.height = '';
-    container.style.position = '';
-    container.style.top = '';
-    container.style.left = '';
-    container.style.width = '';
-    container.style.zIndex = '';
+  
+  if (container) {
+    if (centrer) {
+      container.classList.add('is-centered');
+    } else {
+      container.classList.remove('is-centered');
+    }
   }
-}
+};
 
 V.animateMondesEntree = function () {
   const mondeSvg = V.monde.dom();
   const allCompetences = mondeSvg.querySelectorAll('g[data-type="competence"]');
 
   // Permettre le débordement pendant l'animation
-  mondeSvg.style.overflow = 'visible';
+  mondeSvg.classList.add('overflow-visible');
 
   gsap.set(allCompetences, {
     y: 200,
@@ -504,7 +481,7 @@ V.animateACEntree = function (competenceId) {
   if (!groupeZoom) return;
 
   // Permettre le débordement pendant l'animation
-  svg.style.overflow = 'visible';
+  svg.classList.add('overflow-visible');
 
   // Récupérer uniquement les AC dans ce groupe de compétence
   const allAC = groupeZoom.querySelectorAll('g[data-type="AC"]');
@@ -529,7 +506,7 @@ V.animateAllACEntree = function () {
   const svg = V.flowers.dom();
 
   // Permettre le débordement pendant l'animation
-  svg.style.overflow = 'visible';
+  svg.classList.add('overflow-visible');
 
   // Récupérer toutes les AC
   const allAC = svg.querySelectorAll('g[data-type="AC"]');
@@ -558,13 +535,13 @@ V.zoomToCompetence = function (competenceId) {
 
   const allGroups = svg.querySelectorAll('g');
   for (let i = 0; i < allGroups.length; i++) {
-    allGroups[i].style.display = 'none';
+    allGroups[i].classList.add('hidden');
   }
 
-  groupeZoom.style.display = 'block';
+  groupeZoom.classList.remove('hidden');
   const subGroups = groupeZoom.querySelectorAll('g');
   for (let i = 0; i < subGroups.length; i++) {
-    subGroups[i].style.display = 'block';
+    subGroups[i].classList.remove('hidden');
   }
 
   const bbox = groupeZoom.getBBox();
@@ -600,13 +577,13 @@ V.resetZoom = function () {
   const svg = V.flowers.dom();
   const allGroups = svg.querySelectorAll('g');
   for (let i = 0; i < allGroups.length; i++) {
-    allGroups[i].style.display = 'block';
+    allGroups[i].classList.remove('hidden');
   }
   svg.setAttribute('viewBox', '0 0 2744.98 910.14');
-  svg.style.display = 'block'; // Afficher la carte
+  svg.classList.remove('hidden'); 
   svg.style.width = '100%';
 
-  V.repositionMonde(false); // Ajouté pour éviter le centrage
+  V.repositionMonde(false); 
 
   // Animation d'entrée pour toutes les AC
   V.animateAllACEntree();

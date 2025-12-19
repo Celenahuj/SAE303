@@ -55,7 +55,6 @@ class PopupInfo {
       const img = document.createElement("img");
       
       img.dataset.coinIndex = i + 1;
-      img.style.cursor = "pointer";
       img.title = `Cliquer pour ${i + 1} pièce(s)`;
 
       if (i < goldCoins) {
@@ -128,13 +127,13 @@ class PopupInfo {
         coinsContainer.parentNode.insertBefore(boutonZoom, coinsContainer.nextSibling);
       }
     }
-    boutonZoom.style.display = 'block';
+    boutonZoom.classList.add('popup-bouton-zoom--visible');
   }
 
   cacherBoutonZoom() {
     const boutonZoom = this.root.querySelector('#bouton-zoom');
     if (boutonZoom) {
-      boutonZoom.style.display = 'none';
+      boutonZoom.classList.remove('popup-bouton-zoom--visible');
     }
   }
 
