@@ -59,6 +59,16 @@ M.findCompetence = function (nomCourt) {
   return M.donnees.findCompetence(nomCourt);
 }
 
+M.getSortedHistory = function() {
+  const events = [];
+  for (const code in student.history) {
+    student.history[code].forEach(event => {
+      events.push({ ...event, code });
+    });
+  }
+  return events.sort((a, b) => a.date - b.date); // ancienne à récente
+}
+
 M.calculateSaturation = function (moyenne) {
   const maxMoyenne = 100;
   const ratio = moyenne / maxMoyenne;
@@ -143,10 +153,12 @@ C.handler_mouseMove = function (ev) {
 };
 
 C.handler_export = function () {
+  console.log('Export button clicked');
   M.exportSauvegarde();
 }
 
 C.handler_import = function (ev) {
+  console.log('Import input changed', ev.target.files);
   const file = ev.target.files[0];
   if (!file) return;
   const reader = new FileReader();
@@ -159,6 +171,7 @@ C.handler_import = function (ev) {
       student.saveToLocalStorage();
       
       C.initAllStyles();
+      C.buildHistoryTimeline();
       console.log('Données importées avec succès');
     } catch (err) {
       console.error('Erreur lors de l\'importation du JSON', err);
@@ -172,6 +185,7 @@ C.updateCoin = function (code, coinNumber) {
   const newLevel = (coinNumber / 5) * 100;
   M.setNiveau(code, newLevel);
   M.addHistory(code, oldLevel, newLevel);
+  C.buildHistoryTimeline();
   V.popup.updateDisplay(code);
 }
 
@@ -189,6 +203,8 @@ C.init = function () {
   C.attachEvents();
   C.initAllStyles();
 
+  C.buildHistoryTimeline();
+
   // Masquer la carte au démarrage
   V.flowers.dom().style.display = 'none';
   V.rootPage.querySelector('#reset-zoom').style.display = 'block';
@@ -199,11 +215,51 @@ C.init = function () {
 
   // Branchement du bouton d'export
   const exportBtn = V.rootPage.querySelector('#export-save');
-  exportBtn.addEventListener('click', C.handler_export);
+  console.log('Export button element:', exportBtn);
+  if (exportBtn) {
+    // s'assurer que l'élément accepte les clics (au cas où un parent ou CSS bloque les pointer-events)
+    exportBtn.style.pointerEvents = 'auto';
+    exportBtn.addEventListener('click', C.handler_export);
+    console.log('Export event attached');
+  } else {
+    console.log('Export button not found');
+  }
 
   // Branchement de l'input d'import
   const importInput = V.rootPage.querySelector('#import-save');
-  importInput.addEventListener('change', C.handler_import);
+  console.log('Import input element:', importInput);
+  if (importInput) {
+    importInput.style.pointerEvents = 'auto';
+    importInput.addEventListener('change', C.handler_import);
+    console.log('Import event attached');
+  } else {
+    console.log('Import input not found');
+  }
+
+  // Slider pour l'historique
+  const slider = V.rootPage.querySelector('#history-slider');
+  const dateSpan = V.rootPage.querySelector('#slider-date');
+  if (slider) {
+    slider.addEventListener('input', (e) => {
+      const index = parseInt(e.target.value);
+      const historiquetrier = M.getSortedHistory();
+      const tempData = {};
+      for (let i = 0; i < index; i++) {
+        tempData[historiquetrier[i].code] = historiquetrier[i].newLevel;
+      }
+      student.data = tempData;
+      C.initAllStyles();
+      // Afficher la date
+      if (index === 0) {
+        dateSpan.textContent = 'Début';
+      } else if (index === historiquetrier.length) {
+        dateSpan.textContent = 'Maintenant';
+      } else {
+        const date = new Date(historiquetrier[index - 1].date);
+        dateSpan.textContent = date.toLocaleDateString('fr-FR');
+      }
+    });
+  }
 
   return V.rootPage;
 }
@@ -246,6 +302,25 @@ C.updateMondeStyles = function () {
   }
 }
 
+C.buildHistoryTimeline = function () {
+  const history = M.getSortedHistory();
+  const slider = V.rootPage.querySelector('#history-slider');
+  const dateSpan = V.rootPage.querySelector('#slider-date');
+  if (history.length === 0) {
+    if (slider) {
+      slider.status = true;
+    }
+    if (dateSpan) dateSpan.textContent = 'Aucune donnée';
+    return;
+  }
+  if (slider) {
+    slider.status = false;
+    slider.max = history.length;
+    slider.value = history.length; // état actuel
+  }
+  if (dateSpan) dateSpan.textContent = 'Maintenant';
+}
+
 C.updateACStyle = function (code) {
   const ACGroup = V.rootPage.querySelector('g[id="' + code + '"][data-type="AC"]');
   if (ACGroup) {
@@ -254,14 +329,6 @@ C.updateACStyle = function (code) {
     V.applyACStyle(ACGroup, borderColor);
   }
   C.updateMondeStyles();
-}
-
-C.updateCoin = function (code, coinNumber) {
-  const oldLevel = M.getNiveau(code);
-  const newLevel = (coinNumber / 5) * 100;
-  M.setNiveau(code, newLevel);
-  M.addHistory(code, oldLevel, newLevel);
-  V.popup.updateDisplay(code);
 }
 
 C.updateNotes = function (code, notes) {
@@ -280,7 +347,9 @@ C.zoomToCompetence = function (competenceId) {
 }
 
 M.exportSauvegarde = function () {
+  console.log('Starting export');
   const data = { coins: student.data, history: student.history, notes: student.notes };
+  console.log('Data to export:', data);
 
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -291,6 +360,7 @@ M.exportSauvegarde = function () {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+  console.log('Export completed');
 };
 
 
@@ -367,6 +437,15 @@ V.applyCompetenceSaturation = function (element, saturation) {
   }
 }
 
+V.applyGroupOpacity = function (element, opacity) {
+  // Animate opacity with GSAP so the change is smooth
+  gsap.to(element, {
+    duration: 0.35,
+    opacity: opacity,
+    ease: 'power1.out'
+  });
+}
+
 V.repositionMonde = function (centrer) {
   const container = V.rootPage.querySelector('.svg-monde-container');
   if (centrer) {
@@ -374,11 +453,21 @@ V.repositionMonde = function (centrer) {
     container.style.alignItems = 'center';
     container.style.display = 'flex';
     container.style.height = '100vh';
+    container.style.position = 'fixed';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.width = '100%';
+    container.style.zIndex = '1';
   } else {
     container.style.justifyContent = '';
     container.style.alignItems = '';
     container.style.display = '';
     container.style.height = '';
+    container.style.position = '';
+    container.style.top = '';
+    container.style.left = '';
+    container.style.width = '';
+    container.style.zIndex = '';
   }
 }
 
@@ -486,16 +575,19 @@ V.zoomToCompetence = function (competenceId) {
 
   // Définir des viewBox spécifiques pour certains groupes
   if (competenceId === 'Exprimer') {
-    newViewBox = '-105 -0 1019 1171';
+    newViewBox = '-105 25 1019 1171';
     svg.style.width = '80%';
   } else if (competenceId === 'Développer') {
     svg.style.width = '100%';
+    newViewBox = '285 -0 1416 556';
   } else if (competenceId === 'Entreprendre') {
     svg.style.width = '104%';
+    newViewBox = '1456 460 1394 910';
   } else if (competenceId === 'Concevoir') {
     svg.style.width = '100%';
+    newViewBox = '1466 -0 1392 555';
   } else if (competenceId === 'Comprendre') {
-    newViewBox = '677 426 1022 570';
+    newViewBox = '677 460 1022 570';
     svg.style.width = '75%';
   }
 
@@ -511,8 +603,10 @@ V.resetZoom = function () {
     allGroups[i].style.display = 'block';
   }
   svg.setAttribute('viewBox', '0 0 2744.98 910.14');
-  svg.style.width = '100%';
   svg.style.display = 'block'; // Afficher la carte
+  svg.style.width = '100%';
+
+  V.repositionMonde(false); // Ajouté pour éviter le centrage
 
   // Animation d'entrée pour toutes les AC
   V.animateAllACEntree();

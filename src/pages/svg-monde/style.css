@@ -1,12 +1,12 @@
 .svg-monde-container {
   display: flex;
-  width: 100%;
-  max-width: 100%;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
   margin: 0 auto;
-  padding-top: 5rem;
+  gap: 2em;
   box-sizing: border-box;
+  height: auto;
 }
 
 /* Style pour le conteneur et SVG des flowers */
@@ -19,6 +19,12 @@
 
 .flower-svg svg {
   width: 100%;
+  height: auto;
+}
+
+/* Taille du monde */
+.monde-svg svg {
+  width: 70%;
   height: auto;
 }
 
@@ -97,19 +103,6 @@
   right: auto;
 }
 
-.bouton {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  width: auto; /* ou width: 220px; */
-  padding: 6px;
-  z-index: 200;
-  box-sizing: border-box;
-}
-
 .export-btn:hover {
   background: #5a9069;
 }
@@ -117,26 +110,13 @@
 .export-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5em;
   padding: 0.1em 0.5em;
   background: #4a7c59;
   border: 3px solid #2d5a3a;
   border-radius: 8px;
   cursor: pointer;
-}
-
-.import-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5em;
-  padding: 1em 0.5em;
-  background: #4a7c59;
-  border: 3px solid #2d5a3a;
-  border-radius: 8px;
-  cursor: pointer;
-  color: white;
-  font-family: "Press Start 2P", sans-serif;
-  font-size: 10px;
 }
 
 
@@ -153,13 +133,114 @@
   }
 
   @media (max-width: 480px) {
-    .export-btn {
-    width: 1.20rem;
-    border-width: 2px;
+    .reset-zoom-btn {
+      padding: 6px 12px;
+      font-size: 8px;
+      border-width: 2px;
+    }
   }
-  .import-btn {
-    font-size: 6px;
-    padding: 0.5em 0.2em;
+
+.history-slider-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 1rem 0;
+  padding: 0 1rem;
+}
+
+.history-slider-container label {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+#slider-date {
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  color: #666;
+}
+
+#history-slider {
+  width: 100%;
+  max-width: 400px;
+  height: 6px;
+  border-radius: 3px;
+  background: #ddd;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+#history-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #4a7c59;
+  cursor: pointer;
+}
+
+#history-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #4a7c59;
+  cursor: pointer;
+  border: none;
+}
+
+.container-header{
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 1em;
+  padding-block: 0;
+  z-index: 10;
+}
+
+.bouton{
+  display: flex;
+  gap: 10px;
+}
+
+.hidden-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Style de votre nouveau bouton (le label) */
+.import-btn-custom {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  padding: 8px 12px; /* Ajustez selon votre design */
+  background: #4a7c59;
+  border: 3px solid #2d5a3a;
+  border-radius: 8px;
+  cursor: pointer;
+  color: white;
+  font-family: "Press Start 2P", sans-serif;
+  font-size: 10px;
+}
+
+.import-btn-custom:hover {
+  background: #5a9069;
+}
+
+/* Adaptabilité mobile (reprenant vos media queries) */
+@media (max-width: 768px) {
+  .import-btn-custom {
+    font-size: 8px;
+    padding: 0.7em 0.5em;
     border-width: 2px;
   }
 }

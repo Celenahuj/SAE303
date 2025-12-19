@@ -1,9 +1,23 @@
 <div>
-  <div class="bouton">
+  <section class="container-header">
+    <div class="bouton">
+      <div class="export-btn" id="export-save" title="Exporter mes données">
+        <img src="/save.svg" alt="Exporter mes données">
+      </div>
+
+      <label for="import-save" class="import-btn-custom" title="Importer mes données">
+        <img src="/import.svg" alt="Import">
+      </label>
+      <input type="file" id="import-save" accept=".json" class="hidden-input">
+    </div>
+    <div class="history-slider-container">
+      <label for="history-slider">Progression :</label>
+      <input type="range" id="history-slider" min="0" max="0" value="0">
+      <span id="slider-date">Aucune donnée</span>
+    </div>
     <button id="reset-zoom" class="reset-zoom-btn">Voir la carte</button>
-    <img src="/save.svg"  alt="Exporter mes données" class="export-btn" id="export-save" >
-    <input type="file" alt="Importer mes données" id="import-save" accept=".json" class="import-btn">
-  </div>
+  </section>
+
   <section class="svg-monde-container">
     <slot name="monde-svg"></slot>
     <slot name="flower-svg"></slot>
