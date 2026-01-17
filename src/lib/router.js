@@ -15,6 +15,7 @@ class Router {
     this.currentRoute = null;
     this.isAuthenticated = false;
     this.loginPath = options.loginPath || '/login';
+    this.basePath = import.meta.env.BASE_URL.replace(/\/$/, ''); // Retirer le / final
     
     // Écouter les changements d'URL
     window.addEventListener('popstate', () => this.handleRoute());
@@ -26,6 +27,14 @@ class Router {
         this.navigate(e.target.getAttribute('href'));
       }
     });
+  }
+  
+  // Normaliser le pathname en retirant le base path
+  normalizePath(pathname) {
+    if (this.basePath && pathname.startsWith(this.basePath)) {
+      pathname = pathname.slice(this.basePath.length);
+    }
+    return pathname || '/';
   }
   
   // Définir l'état d'authentification
@@ -106,13 +115,14 @@ class Router {
   
   // Naviguer vers une route
   navigate(path) {
-    window.history.pushState(null, null, path);
+    const fullPath = this.basePath + path;
+    window.history.pushState(null, null, fullPath);
     this.handleRoute();
   }
   
   // Gérer la route actuelle
   handleRoute() {
-    const path = window.location.pathname;
+    const path = this.normalizePath(window.location.pathname);
     
     // Trouver la route correspondante
     for (const route of this.routes) {
