@@ -1,19 +1,19 @@
 svg.monde {
-  width: 70%;
+  width: 60%;
   height: auto;
   padding-bottom: 1rem;
 }
 
 .monde-hover-label {
   position: fixed;
-  background-color: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 12px;
-  pointer-events: none;
   z-index: 1000;
   display: none;
+  padding: 8px 12px;
   white-space: nowrap;
+  color: white;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 4px;
+  pointer-events: none;
 }

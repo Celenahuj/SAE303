@@ -106,32 +106,13 @@ class Router {
   
   // Naviguer vers une route
   navigate(path) {
-    const baseUrl = import.meta.env.BASE_URL;
-    let finalPath = path;
-
-    // Si on a un baseUrl et que le chemin est absolu (commence par /)
-    if (baseUrl && baseUrl !== '/' && path.startsWith('/')) {
-      // On s'assure que baseUrl ne finit pas par un / si le chemin en a un
-      const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-      finalPath = cleanBase + path;
-    }
-
-    window.history.pushState(null, null, finalPath);
+    window.history.pushState(null, null, path);
     this.handleRoute();
   }
   
   // Gérer la route actuelle
   handleRoute() {
-    let path = window.location.pathname;
-
-    // Ajustement pour GitHub Pages : retirer le BASE_URL du chemin si nécessaire
-    const baseUrl = import.meta.env.BASE_URL;
-    const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-    
-    if (cleanBase && cleanBase !== '' && path.startsWith(cleanBase)) {
-      path = path.replace(cleanBase, '') || '/';
-      if (!path.startsWith('/')) path = '/' + path;
-    }
+    const path = window.location.pathname;
     
     // Trouver la route correspondante
     for (const route of this.routes) {
