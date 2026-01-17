@@ -7,6 +7,8 @@ import template from "./template.html?raw";
 import pn from "../../data/pn.js";
 import student from "../../data/student.js";
 import gsap from "gsap";
+import saveIcon from "/save.svg";
+import importIcon from "/import.svg";
 
 
 let M = {}
@@ -189,8 +191,11 @@ C.updateNotes = function (code, notes) {
 }
 
 C.init = function () {
-  V.rootPage = htmlToDOM(template);
-  V.flowers = new FlowerView();
+  V.rootPage = htmlToDOM(template);  
+  // Remplacer les chemins des images
+  V.rootPage.querySelector('#export-save img').src = saveIcon;
+  V.rootPage.querySelector('.import-btn-custom img').src = importIcon;
+    V.flowers = new FlowerView();
   V.monde = new MondeView();
   V.popup = new PopupInfo(M, C.updateACStyle, C.zoomToCompetence, C.updateCoin, C.updateNotes);
   V.rootPage.querySelector('slot[name="flower-svg"]').replaceWith(V.flowers.dom());
