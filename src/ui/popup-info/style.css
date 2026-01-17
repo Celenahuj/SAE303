@@ -16,7 +16,8 @@
 
 
 .popup-content {
-  background: #d8b27c url("wood_texture.png");
+  background: #d8b27c;
+  background: linear-gradient(135deg, #d8b27c 0%, #c9a566 100%);
   background-size: cover;
   padding: 30px;
   width: 420px;

@@ -1,5 +1,7 @@
 import { htmlToDOM } from "../../lib/utils.js";
 import template from "./template.html?raw";
+import coinOr from "/coin_or.svg";
+import coinVide from "/coin_vide.svg";
 
 class PopupInfo {
 
@@ -58,9 +60,9 @@ class PopupInfo {
       img.title = `Cliquer pour ${i + 1} pièce(s)`;
 
       if (i < goldCoins) {
-        img.src = "/coin_or.svg";
+        img.src = coinOr;
       } else {
-        img.src = "/coin_vide.svg";
+        img.src = coinVide;
       }
 
       img.alt = "niveau";
