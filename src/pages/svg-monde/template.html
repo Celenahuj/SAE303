@@ -1,7 +1,28 @@
 <div>
-  <button id="reset-zoom" class="reset-zoom-btn">Voir la carte</button>
-  <section class="svg-monde-container">
+  <div class="container-header">
+    <div class="bouton">
+      <div class="export-btn" id="export-save" title="Exporter mes données">
+        <img src="/save.svg" alt="Exporter mes données">
+      </div>
+
+      <label for="import-save" class="import-btn-custom" title="Importer mes données">
+        <img src="/import.svg" alt="Importer mes données">
+      </label>
+      <input type="file" id="import-save" accept=".json" class="hidden-input">
+    </div>
+
+    <div class="history-slider-container">
+      <label for="history-slider">Progression :</label>
+      <input type="range" id="history-slider" min="0" max="0" value="0">
+      <span id="slider-date">Aucune donnée</span>
+    </div>
+
+    <button id="reset-zoom" class="reset-zoom-btn">Voir la carte</button>
+  </div>
+
+  <div class="svg-monde-container">
     <slot name="monde-svg"></slot>
     <slot name="flower-svg"></slot>
-  </section>
+  </div>
 </div>
+

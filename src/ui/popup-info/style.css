@@ -1,4 +1,4 @@
-/* FOND FLOU */
+
 .popup {
   position: fixed;
   inset: 0;
@@ -14,7 +14,7 @@
   display: none;
 }
 
-/* CONTENU STYLE PANNEAU EN BOIS */
+
 .popup-content {
   background: #d8b27c url("wood_texture.png");
   background-size: cover;
@@ -29,7 +29,6 @@
   position: relative;
 }
 
-/* BOUTON FERMER */
 .popup-fermer {
   position: absolute;
   top: 10px;
@@ -48,7 +47,7 @@
   background: #9c683c;
 }
 
-/* BOUTON ZOOM */
+
 .popup-bouton-zoom {
   background: #4a7c59;
   border: 3px solid #2d5a3a;
@@ -59,15 +58,20 @@
   cursor: pointer;
   transition: 0.15s;
   margin: 15px auto;
-  display: block;
   font-family: "Press Start 2P", sans-serif;
+  display: none; 
 }
 
 .popup-bouton-zoom:hover {
   background: #5a9069;
 }
 
-/* TEXTE */
+
+.popup-bouton-zoom--visible {
+  display: block;
+}
+
+
 .popup-code {
   margin-top: 5px;
   margin-bottom: 15px;
@@ -79,7 +83,28 @@
   line-height: 1.45;
 }
 
-/* SECTION NIVEAU & PIECES */
+.popup-description {
+  width: 100%;
+  min-height: 80px;
+  margin: 15px 0;
+  padding: 10px;
+  border: 2px solid #8a5a32;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  font-family: "Press Start 2P", sans-serif;
+  font-size: 12px;
+  color: #3b2615 ; 
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.popup-description:focus {
+  border-color: #5e3c24;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+
 .level-section {
   margin-top: 20px;
   margin-bottom: 15px;
@@ -88,4 +113,10 @@
 .coins img {
   width: 38px;
   margin: 3px;
+  cursor: pointer;
 }
+
+.popup-description::placeholder {
+  color:  #5e3c24; 
+}
+

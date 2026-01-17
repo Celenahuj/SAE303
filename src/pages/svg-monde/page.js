@@ -4,65 +4,64 @@ import { PopupInfo } from "@/ui/popup-info";
 import "@/ui/popup-info/style.css";
 import { htmlToDOM } from "@/lib/utils.js";
 import template from "./template.html?raw";
-import data from "../../data/data.json";
-import studentData from "../../data/student.json";
+import pn from "../../data/pn.js";
+import student from "../../data/student.js";
 import gsap from "gsap";
-import { Animation } from "@/lib/animation.js";
 
 
 let M = {}
-M.donnees = data;
-M.student = studentData;
+M.donnees = pn;
+M.student = student;
 
 M.getNiveau = function (code) {
-  return +localStorage.getItem('coin_' + code) || 0;
+  return student.getCoin(code);
 }
 
 M.setNiveau = function (code, niveau) {
-  localStorage.setItem('coin_' + code, niveau);
+  student.setCoin(code, niveau);
 }
 
 M.getHistory = function (code) {
-  const historyKey = 'history_' + code;
-  return JSON.parse(localStorage.getItem(historyKey) || '[]');
+  return student.getHistory(code);
 }
 
 M.addHistory = function (code, oldLevel, newLevel) {
-  const historyKey = 'history_' + code;
-  const history = M.getHistory(code);
-  history.push({
-    ac: code,
-    date: Date.now(),
-    oldLevel: oldLevel,
-    newLevel: newLevel
-  });
-  localStorage.setItem(historyKey, JSON.stringify(history));
+  student.addHistory(code, oldLevel, newLevel);
+  student.saveToLocalStorage();
+}
+
+M.getNotes = function (code) {
+  return student.getNotes(code);
+}
+
+M.setNotes = function (code, notes) {
+  student.setNotes(code, notes);
+  student.saveToLocalStorage();
 }
 
 M.calculateBorderColor = function (niveau) {
+
   const maxCoins = 5;
   const goldCoins = Math.round((niveau / 100) * maxCoins);
-  
-  if (goldCoins === 0){
-    return null;
-  }
-  if (goldCoins <= 2) {
-    return '#ff0000';
-  } else if (goldCoins <= 4) {
-    return '#ffff00';
-  } else {
-    return '#00ff00';
-  }
+
+  if (goldCoins === 0) return null;
+  if (goldCoins <= 2) return 'ac-filter--red';
+  if (goldCoins <= 4) return 'ac-filter--yellow';
+  return 'ac-filter--green';
 }
 
 M.findCompetence = function (nomCourt) {
-  for (let key in M.donnees) {
-    const competence = M.donnees[key];
-    if (competence.nom_court === nomCourt) {
-      return competence;
-    }
+  return M.donnees.findCompetence(nomCourt);
+}
+
+M.getSortedHistory = function() {
+  const events = [];
+  for (const code in student.history) {
+    student.history[code].forEach(event => {
+      events.push({ ...event, code });
+    });
   }
-  return null;
+  return events.sort((a, b) => a.date - b.date); 
 }
 
 M.calculateSaturation = function (moyenne) {
@@ -77,48 +76,22 @@ M.calculateSaturation = function (moyenne) {
   } else {
     saturation = 0.8 + (ratio - 0.8) * 1.0;
   }
-  
+
   return saturation;
 }
 
 M.getACInfo = function (element) {
   const id = element.id;
   if (!id) return null;
-  
-  for (let competence of Object.values(M.donnees)) {
-    for (let niveau of competence.niveaux) {
-      for (let ac of niveau.acs) {
-        if (ac.code === id) {
-          return {
-            competence: competence.nom_court,
-            niveau: Math.round((niveau.ordre / 3) * 100),
-            ac: ac
-          };
-        }
-      }
-    }
-  }
-  return null;
+
+  return M.donnees.getACInfo(id);
 }
 
 M.getCompetenceInfo = function (element) {
   const id = element.id;
   if (!id) return null;
-  
-  for (let competence of Object.values(M.donnees)) {
-    if (competence.nom_court === id) {
-      const niveauMoyen = Math.round((competence.niveaux.length / 3) * 100);
-      return {
-        competence: competence.nom_court,
-        niveau: niveauMoyen,
-        ac: {
-          code: competence.nom_court,
-          libelle: competence.libelle_long
-        }
-      };
-    }
-  }
-  return null;
+
+  return M.donnees.getCompetenceInfo(id);
 }
 
 
@@ -151,57 +124,151 @@ C.handler_clickMonde = function (ev) {
   }
 };
 
-C.handler_hoverMonde = function (ev) {
-  const groupe = ev.target.closest('g[data-type="competence"]');
+C.handler_hover = function (ev) {
+  const groupe = ev.target.closest('g[data-type="competence"], g[data-type="AC"]');
   if (groupe) {
     V.showHoverLabel(groupe.id, ev.clientX, ev.clientY);
     V.animateGroupHover(groupe, true);
   }
 };
 
-C.handler_hoverOutMonde = function (ev) {
-  const groupe = ev.target.closest('g[data-type="competence"]');
+C.handler_hoverOut = function (ev) {
+  const groupe = ev.target.closest('g[data-type="competence"], g[data-type="AC"]');
   if (groupe) {
     V.hideHoverLabel();
     V.animateGroupHover(groupe, false);
   }
 };
 
-C.handler_mouseMoveMonde = function (ev) {
-  const groupe = ev.target.closest('g[data-type="competence"]');
+C.handler_mouseMove = function (ev) {
+  const groupe = ev.target.closest('g[data-type="competence"], g[data-type="AC"]');
   if (groupe) {
     V.updateHoverPosition(ev.clientX, ev.clientY);
   }
 };
 
+C.handler_export = function () {
+  console.log('Export button clicked');
+  M.exportSauvegarde();
+}
+
+C.handler_import = function (ev) {
+  console.log('Import input changed', ev.target.files);
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.coins) student.data = data.coins;
+      if (data.history) student.history = data.history;
+      if (data.notes) student.notes = data.notes;
+      student.saveToLocalStorage();
+      
+      C.initAllStyles();
+      C.buildHistoryTimeline();
+      console.log('Données importées avec succès');
+    } catch (err) {
+      console.error('Erreur lors de l\'importation du JSON', err);
+    }
+  };
+  reader.readAsText(file);
+}
+
+C.updateCoin = function (code, coinNumber) {
+  const oldLevel = M.getNiveau(code);
+  const newLevel = (coinNumber / 5) * 100;
+  M.setNiveau(code, newLevel);
+  M.addHistory(code, oldLevel, newLevel);
+  C.buildHistoryTimeline();
+  V.popup.updateDisplay(code);
+}
+
+C.updateNotes = function (code, notes) {
+  M.setNotes(code, notes);
+}
+
 C.init = function () {
   V.rootPage = htmlToDOM(template);
   V.flowers = new FlowerView();
   V.monde = new MondeView();
-  V.popup = new PopupInfo(M, C.updateACStyle, C.zoomToCompetence);
+  V.popup = new PopupInfo(M, C.updateACStyle, C.zoomToCompetence, C.updateCoin, C.updateNotes);
   V.rootPage.querySelector('slot[name="flower-svg"]').replaceWith(V.flowers.dom());
   V.rootPage.querySelector('slot[name="monde-svg"]').replaceWith(V.monde.dom());
   C.attachEvents();
   C.initAllStyles();
-  
+
+  C.buildHistoryTimeline();
+
   // Masquer la carte au démarrage
-  V.flowers.dom().style.display = 'none';
-  V.rootPage.querySelector('#reset-zoom').style.display = 'block';
+  V.flowers.dom().classList.add('hidden');
+  V.rootPage.querySelector('#reset-zoom').classList.remove('hidden');
   V.repositionMonde(true);
-  
+
   // Animation pop des mondes au démarrage
   V.animateMondesEntree();
-  
+
+  // Branchement du bouton d'export
+  const exportBtn = V.rootPage.querySelector('#export-save');
+  console.log('Export button element:', exportBtn);
+  if (exportBtn) {
+    exportBtn.addEventListener('click', C.handler_export);
+    console.log('Export event attached');
+  } else {
+    console.log('Export button not found');
+  }
+
+  // Branchement de l'input d'import
+  const importInput = V.rootPage.querySelector('#import-save');
+  console.log('Import input element:', importInput);
+  if (importInput) {
+    importInput.style.pointerEvents = 'auto';
+    importInput.addEventListener('change', C.handler_import);
+    console.log('Import event attached');
+  } else {
+    console.log('Import input not found');
+  }
+
+  // Slider pour l'historique
+  const slider = V.rootPage.querySelector('#history-slider');
+  const dateSpan = V.rootPage.querySelector('#slider-date');
+  if (slider) {
+    slider.addEventListener('input', (e) => {
+      const index = parseInt(e.target.value);
+      const historiquetrier = M.getSortedHistory();
+      const tempData = {};
+      for (let i = 0; i < index; i++) {
+        tempData[historiquetrier[i].code] = historiquetrier[i].newLevel;
+      }
+      student.data = tempData;
+      C.initAllStyles();
+      if (index === 0) {
+        dateSpan.textContent = 'Début';
+      } else if (index === historiquetrier.length) {
+        dateSpan.textContent = 'Maintenant';
+      } else {
+        const date = new Date(historiquetrier[index - 1].date);
+        dateSpan.textContent = date.toLocaleDateString('fr-FR');
+      }
+    });
+  }
+
   return V.rootPage;
 }
 
 C.attachEvents = function () {
   V.rootPage.addEventListener("click", C.handler_click);
   V.rootPage.addEventListener("click", C.handler_clickMonde);
-  V.rootPage.querySelector('#reset-zoom').addEventListener('click', C.resetZoom);
-  V.monde.dom().addEventListener('mouseenter', C.handler_hoverMonde, true);
-  V.monde.dom().addEventListener('mouseleave', C.handler_hoverOutMonde, true);
-  V.monde.dom().addEventListener('mousemove', C.handler_mouseMoveMonde, true);
+  const resetBtn = V.rootPage.querySelector('#reset-zoom');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => { V.resetZoom(); });
+  }
+  V.monde.dom().addEventListener('mouseenter', C.handler_hover, true);
+  V.monde.dom().addEventListener('mouseleave', C.handler_hoverOut, true);
+  V.monde.dom().addEventListener('mousemove', C.handler_mouseMove, true);
+  V.flowers.dom().addEventListener('mouseenter', C.handler_hover, true);
+  V.flowers.dom().addEventListener('mouseleave', C.handler_hoverOut, true);
+  V.flowers.dom().addEventListener('mousemove', C.handler_mouseMove, true);
 }
 
 C.initAllStyles = function () {
@@ -213,7 +280,7 @@ C.initAllStyles = function () {
     const borderColor = M.calculateBorderColor(niveau);
     V.applyACStyle(ac, borderColor);
   }
-  
+
   C.updateMondeStyles();
 }
 
@@ -227,6 +294,25 @@ C.updateMondeStyles = function () {
   }
 }
 
+C.buildHistoryTimeline = function () {
+  const history = M.getSortedHistory();
+  const slider = V.rootPage.querySelector('#history-slider');
+  const dateSpan = V.rootPage.querySelector('#slider-date');
+  if (history.length === 0) {
+    if (slider) {
+      slider.status = true;
+    }
+    if (dateSpan) dateSpan.textContent = 'Aucune donnée';
+    return;
+  }
+  if (slider) {
+    slider.status = false;
+    slider.max = history.length;
+    slider.value = history.length; 
+  }
+  if (dateSpan) dateSpan.textContent = 'Maintenant';
+}
+
 C.updateACStyle = function (code) {
   const ACGroup = V.rootPage.querySelector('g[id="' + code + '"][data-type="AC"]');
   if (ACGroup) {
@@ -237,10 +323,14 @@ C.updateACStyle = function (code) {
   C.updateMondeStyles();
 }
 
+C.updateNotes = function (code, notes) {
+  M.setNotes(code, notes);
+}
+
 C.zoomToCompetence = function (competenceId) {
   // Afficher la carte et le bouton reset
-  V.flowers.dom().style.display = 'block';
-  V.rootPage.querySelector('#reset-zoom').style.display = 'block';
+  V.flowers.dom().classList.remove('hidden');
+  V.rootPage.querySelector('#reset-zoom').classList.remove('hidden');
   V.repositionMonde(false);
   V.zoomToCompetence(competenceId);
   
@@ -248,14 +338,22 @@ C.zoomToCompetence = function (competenceId) {
   V.animateACEntree(competenceId);
 }
 
-C.resetZoom = function () {
-  V.resetZoom();
-  // Afficher carte et monde ensemble
-  V.flowers.dom().style.display = 'block';
-  V.monde.dom().style.display = 'block';
-  V.rootPage.querySelector('#reset-zoom').style.display = 'block';
-  V.repositionMonde(false);
-}
+M.exportSauvegarde = function () {
+  console.log('Starting export');
+  const data = { coins: student.data, history: student.history, notes: student.notes };
+  console.log('Data to export:', data);
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = "sauvegarde_SAE303.json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  console.log('Export completed');
+};
 
 
 let V = {
@@ -266,11 +364,10 @@ let V = {
 };
 
 V.applyACStyle = function (element, borderColor) {
-  if (borderColor === null) {
-    element.style.filter = '';
-  } else {
-    element.style.filter = 'drop-shadow(0 0 4px ' + borderColor + ') drop-shadow(0 0 8px ' + borderColor + ')';
-  }
+
+  element.classList.remove('ac-filter--red', 'ac-filter--yellow', 'ac-filter--green');
+  element.style.filter = '';
+  if (borderColor) element.classList.add(borderColor);
 }
 
 V.showHoverLabel = function (text, x, y) {
@@ -331,34 +428,39 @@ V.applyCompetenceSaturation = function (element, saturation) {
   }
 }
 
+V.applyGroupOpacity = function (element, opacity) {
+  
+  gsap.to(element, {
+    duration: 0.35,
+    opacity: opacity,
+    ease: 'power1.out'
+  });
+}
 V.repositionMonde = function (centrer) {
   const container = V.rootPage.querySelector('.svg-monde-container');
-  if (centrer) {
-    container.style.justifyContent = 'center';
-    container.style.alignItems = 'center';
-    container.style.display = 'flex';
-    container.style.height = '100vh';
-  } else {
-    container.style.justifyContent = '';
-    container.style.alignItems = '';
-    container.style.display = '';
-    container.style.height = '';
+  
+  if (container) {
+    if (centrer) {
+      container.classList.add('is-centered');
+    } else {
+      container.classList.remove('is-centered');
+    }
   }
-}
+};
 
 V.animateMondesEntree = function () {
   const mondeSvg = V.monde.dom();
   const allCompetences = mondeSvg.querySelectorAll('g[data-type="competence"]');
-  
+
   // Permettre le débordement pendant l'animation
-  mondeSvg.style.overflow = 'visible';
-  
+  mondeSvg.classList.add('overflow-visible');
+
   gsap.set(allCompetences, {
     y: 200,
     scale: 0,
     opacity: 0
   });
-  
+
   gsap.to(allCompetences, {
     y: 0,
     scale: 1,
@@ -375,21 +477,46 @@ V.animateMondesEntree = function () {
 V.animateACEntree = function (competenceId) {
   const svg = V.flowers.dom();
   const groupeZoom = svg.querySelector('#' + competenceId);
-  
+
   if (!groupeZoom) return;
-  
+
   // Permettre le débordement pendant l'animation
-  svg.style.overflow = 'visible';
-  
+  svg.classList.add('overflow-visible');
+
   // Récupérer uniquement les AC dans ce groupe de compétence
   const allAC = groupeZoom.querySelectorAll('g[data-type="AC"]');
-  
+
   gsap.set(allAC, {
     y: 20,
     scale: 0.95,
     opacity: 0
   });
-  
+
+  gsap.to(allAC, {
+    y: 0,
+    scale: 1,
+    opacity: 1,
+    duration: 0.6,
+    ease: "power3.out",
+    stagger: 0.04
+  });
+}
+
+V.animateAllACEntree = function () {
+  const svg = V.flowers.dom();
+
+  // Permettre le débordement pendant l'animation
+  svg.classList.add('overflow-visible');
+
+  // Récupérer toutes les AC
+  const allAC = svg.querySelectorAll('g[data-type="AC"]');
+
+  gsap.set(allAC, {
+    y: 20,
+    scale: 0.95,
+    opacity: 0
+  });
+
   gsap.to(allAC, {
     y: 0,
     scale: 1,
@@ -403,37 +530,64 @@ V.animateACEntree = function (competenceId) {
 V.zoomToCompetence = function (competenceId) {
   const svg = V.flowers.dom();
   const groupeZoom = svg.querySelector('#' + competenceId);
-  
+
   if (!groupeZoom) return;
-  
+
   const allGroups = svg.querySelectorAll('g');
   for (let i = 0; i < allGroups.length; i++) {
-    allGroups[i].style.display = 'none';
+    allGroups[i].classList.add('hidden');
   }
-  
-  groupeZoom.style.display = 'block';
+
+  groupeZoom.classList.remove('hidden');
   const subGroups = groupeZoom.querySelectorAll('g');
   for (let i = 0; i < subGroups.length; i++) {
-    subGroups[i].style.display = 'block';
+    subGroups[i].classList.remove('hidden');
   }
-  
+
   const bbox = groupeZoom.getBBox();
-  const padRatio = 0.15;
+  const padRatio = 0.10;
   const padX = bbox.width * padRatio;
   const padY = bbox.height * padRatio;
-  const newViewBox = (bbox.x - padX) + ' ' + (bbox.y - padY) + ' ' + (bbox.width + padX * 2) + ' ' + (bbox.height + padY * 2);
-  svg.setAttribute('viewBox', newViewBox);
+  let newViewBox = (bbox.x - padX) + ' ' + (bbox.y - padY) + ' ' + (bbox.width + padX * 2) + ' ' + (bbox.height + padY * 2);
+
+  // Définir des viewBox spécifiques pour certains groupes
+  if (competenceId === 'Exprimer') {
+    newViewBox = '-105 25 1019 1171';
+    svg.style.width = '80%';
+  } else if (competenceId === 'Développer') {
+    svg.style.width = '100%';
+    newViewBox = '285 -0 1416 556';
+  } else if (competenceId === 'Entreprendre') {
+    svg.style.width = '104%';
+    newViewBox = '1456 460 1394 910';
+  } else if (competenceId === 'Concevoir') {
+    svg.style.width = '100%';
+    newViewBox = '1466 -0 1392 555';
+  } else if (competenceId === 'Comprendre') {
+    newViewBox = '677 460 1022 570';
+    svg.style.width = '75%';
+  }
+
+
+console.log("Nouveau viewBox :", newViewBox);
+svg.setAttribute('viewBox', newViewBox);
 }
 
 V.resetZoom = function () {
   const svg = V.flowers.dom();
   const allGroups = svg.querySelectorAll('g');
   for (let i = 0; i < allGroups.length; i++) {
-    allGroups[i].style.display = 'block';
+    allGroups[i].classList.remove('hidden');
   }
   svg.setAttribute('viewBox', '0 0 2744.98 910.14');
-}
+  svg.classList.remove('hidden'); 
+  svg.style.width = '100%';
 
+  V.repositionMonde(false); 
+
+  // Animation d'entrée pour toutes les AC
+  V.animateAllACEntree();
+}
 export function SvgMondePage() {
   return C.init();
 }
