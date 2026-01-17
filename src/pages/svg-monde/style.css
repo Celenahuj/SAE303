@@ -1,0 +1,85 @@
+.svg-monde-container {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 auto;
+  padding-block: 2rem;
+  box-sizing: border-box;
+}
+
+/* Groupes cliquables du monde */
+.monde-svg svg g#Exprimer,
+.monde-svg svg g#Développer,
+.monde-svg svg g#Concevoir,
+.monde-svg svg g#Comprendre,
+.monde-svg svg g#Entreprendre {
+  cursor: pointer;
+}
+
+.monde-svg svg g#Exprimer *,
+.monde-svg svg g#Développer *,
+.monde-svg svg g#Concevoir *,
+.monde-svg svg g#Comprendre *,
+.monde-svg svg g#Entreprendre * {
+  pointer-events: none;
+}
+
+.svg-monde-title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+}
+
+.reset-zoom-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  background: #4a7c59;
+  border: 3px solid #2d5a3a;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 100;
+  font-family: "Press Start 2P", sans-serif;
+}
+
+.reset-zoom-btn:hover {
+  background: #5a9069;
+}
+
+@media (max-width: 768px) {
+  .reset-zoom-btn {
+    top: 10px;
+    right: 10px;
+    padding: 8px 15px;
+    font-size: 10px;
+    border-width: 2px;
+  }
+}
+
+@media (max-width: 480px) {
+  .reset-zoom-btn {
+    top: 10px;
+    right: 10px;
+    padding: 6px 12px;
+    font-size: 8px;
+    border-width: 2px;
+  }
+}
+
+.monde-hover-label {
+  position: fixed;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  display: none;
+  white-space: nowrap;
+}
